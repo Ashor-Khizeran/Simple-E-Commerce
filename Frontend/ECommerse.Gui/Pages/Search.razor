@@ -1,5 +1,69 @@
 ﻿@page "/search"
+@using System.Net.Http.Headers
+@using System.ComponentModel.DataAnnotations;
+@using ECommerse.Gui.Components
+@using System.Text.Json
+
+@inject HttpClient http
+
 
 <PageTitle>Search</PageTitle>
 
 <h1 class="h1">Search Page</h1>
+
+@if (showMessage)
+{
+    <Message message=@alertMessage />
+}
+<EditForm Model="@model" OnInvalidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <InputText @bind-Value="model!.Name">Search Product</InputText>
+    <input type="submit" value="submit" name="Submit" class="btn btn-primary mb-3" />
+
+</EditForm>
+
+@code {
+    private Product model = new();
+    private bool showMessage = false;
+    private string alertMessage = "Show alert message!";
+    public class Product
+    {
+        [Required(ErrorMessage = "Id is required")]
+        public Guid Id { get; set; } = new Guid();
+
+        [Required(ErrorMessage = "Name is required")]
+        public string Name { get; set; } = string.Empty;
+    }
+
+    private async void HandleValidSubmit()
+    {
+        string jsonPayload = JsonSerializer.Serialize(model.Name);
+        StringContent content = new StringContent(jsonPayload);
+        try
+        {
+            var response = await http.PostAsync("https://192.168.2.15:7130/products", content);
+
+            if (response == null)
+            {
+                alertMessage = "No response from the server.";
+                showMessage = true;
+                return;
+            }
+
+            if (response.IsSuccessStatusCode)
+            {
+                alertMessage = "Product found!";
+                showMessage = true;
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            alertMessage = ex.Message;
+            showMessage = true;
+            return;
+        }
+    }
+}
