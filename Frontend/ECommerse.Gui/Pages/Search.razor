@@ -19,8 +19,14 @@
     <DataAnnotationsValidator />
     <ValidationSummary />
 
-    <InputText @bind-Value="model!.Name">Search Product</InputText>
-    <input type="submit" value="submit" name="Submit" class="btn btn-primary mb-3" />
+    <div class="input-group m-3">
+        <div>
+            <InputText class="form-control" @bind-Value="model!.Name" />
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary mb-3">Submit</button>
+        </div>
+    </div>
 
 </EditForm>
 
@@ -39,24 +45,21 @@
 
     private async void HandleValidSubmit()
     {
-        string jsonPayload = JsonSerializer.Serialize(model.Name);
-        StringContent content = new StringContent(jsonPayload);
+        // Generate a random id for the searched product object
+        model.Id = new Guid();
         try
         {
-            var response = await http.PostAsync("https://192.168.2.15:7130/products", content);
-
-            if (response == null)
-            {
-                alertMessage = "No response from the server.";
-                showMessage = true;
-                return;
-            }
+            var response = await http.PostAsJsonAsync<Product>("https://192.168.2.15:7130/api/products", model);
 
             if (response.IsSuccessStatusCode)
             {
                 alertMessage = "Product found!";
                 showMessage = true;
-                return;
+            }
+            else
+            {
+                alertMessage = "No product found!";
+                showMessage = true;
             }
         }
         catch (Exception ex)
