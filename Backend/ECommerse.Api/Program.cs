@@ -1,8 +1,17 @@
 using System.Text.Json;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
+using ECommerse.Api.Data;
+using Microsoft.EntityFrameworkCore;
+using ECommerse.Api.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Get Microsoft SQL server connection string from appsettings.json
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+
+builder.Services.AddDbContext<ECommerseDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
 
 builder.Services.AddCors(options =>
 {
@@ -29,5 +38,3 @@ app.MapPost("api/products", async (HttpRequest searchRequest) =>
 });
 
 app.Run();
-
-record Product(Guid Id, string Name);
