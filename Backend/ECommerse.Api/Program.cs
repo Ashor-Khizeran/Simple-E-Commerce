@@ -2,6 +2,7 @@ using System.Text.Json;
 using ECommerse.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using ECommerse.Api.Entities;
+using Microsoft.Identity.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,11 +31,26 @@ app.UseHttpsRedirection();
 app.UseCors();
 
 
-app.MapPost("api/products", async (HttpRequest searchRequest) =>
+app.MapPost("api/products", async (ECommerseDbContext context, Product searchedProduct) =>
 {
-    var searchProduct = await JsonSerializer.DeserializeAsync<Product>(searchRequest.Body);
+    try
+    {
+        // Search for the product in database
+        var existingProduct = await context.products.FirstOrDefaultAsync<Product>(p => p.Name == searchedProduct.Name);
+        // Found the product
+        if(existingProduct is not null)
+        {
+            return Results.Ok(existingProduct);
 
-    return Results.Ok(searchProduct);
+        }
+    }
+    catch (Exception ex)
+    {
+        // Log the errors
+        return Results.BadRequest(new{messeage = ex.Message});
+    }
+
+    return Results.NotFound("Not found!");
 });
 
 app.Run();
